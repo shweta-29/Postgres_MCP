@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MCP Mongo Demo</title>
+</head>
+<body>
+  <h2>MVP: Ask a Question</h2>
+
+  <input type="text" id="queryInput" placeholder="Type your question..." style="width:300px;">
+  <button onclick="sendQuery()">Ask</button>
+
+  <h3>Response:</h3>
+  <pre id="response"></pre>
+
+  <script>
+    async function sendQuery() {
+      const query = document.getElementById("queryInput").value;
+      const res = await fetch("http://127.0.0.1:8000/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_query: query })
+      });
+      const data = await res.json();
+      document.getElementById("response").textContent = JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>
