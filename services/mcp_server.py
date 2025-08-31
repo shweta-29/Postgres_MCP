@@ -10,19 +10,21 @@ structured parameters. This keeps things safe and predictable.
 """
 
 # Import MCP FastAPI helper and MongoDB client
-from mcp.server.fastapi import FastAPI, serve
+from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
+# import config
+import asyncio
+import requests
 
 # ---- 1. Connect to MongoDB ----
 # This connects to MongoDB running locally on default port.
 # "testdb" will be our database name.
-MONGO_URI = "mongodb://localhost:27017"
-DB_NAME = "testdb"
 
-client = AsyncIOMotorClient(MONGO_URI)  # async MongoDB client
-db = client[DB_NAME]                    # select database
-
+MONGO_URI="mongodb://localhost:27017"
+DB_NAME="testdb"
+client = AsyncIOMotorClient(MONGO_URI)
+db = client[DB_NAME]
 
 # ---- 2. Define tool input schema ----
 # This tells GPT exactly what arguments are allowed.
@@ -36,7 +38,7 @@ class MongoQueryParams(BaseModel):
 
 
 # ---- 3. Create MCP server ----
-mcp = FastAPI()
+mcp = FastMCP("mongo-server")
 
 # ---- 4. Define tool that Mongo queries will run through ----
 @mcp.tool()
@@ -47,7 +49,9 @@ async def run_mongo_query_tool(params: MongoQueryParams):
     """
 
     # pick the collection (like choosing a table in SQL)
+    print("Collection:")
     coll = db[params.collection]
+    print(coll)
 
     # build a query cursor
     cursor = coll.find(params.filter, params.projection)
@@ -68,6 +72,4 @@ async def run_mongo_query_tool(params: MongoQueryParams):
 
 # ---- 5. Run the MCP server if script is executed directly ----
 if __name__ == "__main__":
-    import asyncio
-    # "mongo-server" is just the name of this MCP server
-    asyncio.run(serve("mongo-server", mcp)) #serve starts the MCP server process and publishes the registered tools so an MCP client can list and call them.
+    asyncio.run(mcp.run()) 
